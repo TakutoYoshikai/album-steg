@@ -44,10 +44,11 @@ def cut_bytes(data):
             j = 0
         if j >= len(delimeter):
             return data[:i - len(delimeter) + 1]
+    return data
 
 
 
-def reveral(imagepath):
+def reveral(imagepath, filepath):
     image = Image.open(imagepath)
     width, height = image.size
     binary = ""
@@ -59,7 +60,7 @@ def reveral(imagepath):
             for color in pixel:
                 binary += str(getbit(color))
     d = bytes(cut_bytes(split(binary)))
-    f = open("output", "wb")
+    f = open(filepath, "wb")
     f.write(d)
     f.close()
                 
@@ -87,14 +88,16 @@ def hide(imagepath, filepath):
     len_binary = len(binary)
     for row in range(height):
         for col in range(width):
-            if index + 3 <= len_binary:
+            if index < len_binary:
                 pixel = image.getpixel((col, row))
                 r = pixel[0]
                 g = pixel[1]
                 b = pixel[2]
                 r = setlsb(r, binary[index])
-                g = setlsb(g, binary[index + 1])
-                b = setlsb(b, binary[index + 2])
+                if index + 1 < len_binary:
+                    g = setlsb(g, binary[index + 1])
+                if index + 2 < len_binary:
+                    b = setlsb(b, binary[index + 2])
                 if image.mode == "RGBA":
                     encoded.putpixel((col, row), (r, g, b, pixel[3]))
                 else:
@@ -105,6 +108,3 @@ def hide(imagepath, filepath):
                 return encoded
 
 
-
-reveral("hello.png")
-#hide("takuto-meshi.png", "/home/lucky/obin/hw").save("hello.png")
