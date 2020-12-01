@@ -104,7 +104,6 @@ def hide(image, data):
     content = bytearray(content)
     content.extend(delimeter)
     binary_content = message_to_binary(content)
-
     binary = "".join(binary_content)
     len_binary = len(binary)
     for row in range(height):
