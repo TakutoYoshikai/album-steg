@@ -1,5 +1,21 @@
 from PIL import Image
 import os
+from functools import reduce
+
+
+def list_images(dr):
+    imagenames = list(filter(lambda x: x.endswith(".png"), os.listdir(dr)))
+    images = []
+    for imagename in imagenames:
+        imagepath = dr + "/" + imagename
+        images.append(Image.open(imagepath))
+    return images
+
+def capacity_of_images(images):
+    result = 0
+    for image in images:
+        result += capacity_of_image(image)
+    return result
 
 
 def message_to_binary(message):
@@ -64,6 +80,10 @@ def reveral(imagepath, filepath):
     f.write(d)
     f.close()
                 
+def capacity_of_image(image):
+    width, height = image.size
+    del_len = len(bytearray("#|#|#|#".encode()))
+    return (width * height * 3 - del_len) // 8
 
 def hide(imagepath, filepath):
     image = Image.open(imagepath)
@@ -108,3 +128,4 @@ def hide(imagepath, filepath):
                 return encoded
 
 
+print(capacity_of_images(list_images("images")))
