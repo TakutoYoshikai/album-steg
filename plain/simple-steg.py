@@ -35,12 +35,15 @@ def split(binary):
 def cut_bytes(data):
     delimeter = "#|#|#|#".encode()
     delimeter = bytearray(delimeter)
+    print(len(delimeter))
     j = 0
     for i in range(len(data)):
         if data[i] == delimeter[j]:
             j = j + 1
+        else:
+            j = 0
         if j >= len(delimeter):
-            return data[:(i - len(delimeter))]
+            return data[:i - len(delimeter) + 1]
 
 
 
