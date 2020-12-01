@@ -2,12 +2,18 @@ from PIL import Image
 import os
 from functools import reduce
 
-
-def list_images(dr):
+def list_imagepath(dr):
     imagenames = list(filter(lambda x: x.endswith(".png"), os.listdir(dr)))
-    images = []
+    imagepaths = []
     for imagename in imagenames:
         imagepath = dr + "/" + imagename
+        imagepaths.append(imagepath)
+    return imagepaths
+
+
+def list_images(imagepaths):
+    images = []
+    for imagepath in imagepaths:
         images.append(Image.open(imagepath))
     return images
 
@@ -33,6 +39,7 @@ def setlsb(component, bit):
 
 def getbit(c):
     return c & 1
+
 
 def split(binary):
     index = 0
@@ -64,8 +71,7 @@ def cut_bytes(data):
 
 
 
-def reveral(imagepath, filepath):
-    image = Image.open(imagepath)
+def reveral(image):
     width, height = image.size
     binary = ""
     for row in range(height):
@@ -75,31 +81,29 @@ def reveral(imagepath, filepath):
                 pixel = pixel[:3]
             for color in pixel:
                 binary += str(getbit(color))
-    d = bytes(cut_bytes(split(binary)))
-    f = open(filepath, "wb")
-    f.write(d)
-    f.close()
+    d = cut_bytes(split(binary))
+    return d
                 
 def capacity_of_image(image):
     width, height = image.size
-    del_len = len(bytearray("#|#|#|#".encode()))
-    return (width * height * 3 - del_len) // 8
+    len_del = len(bytearray("#|#|#|#".encode()))
+    return (width * height * 3) // 8 - len_del
 
-def hide(imagepath, filepath):
-    image = Image.open(imagepath)
+def hide(image, data):
     if image.mode not in ["RGB", "RGBA"]:
         image = image.convert("RGB")
     encoded = image.copy()
     width, height = image.size
     n_bytes = width * height * 3 // 8
-    file_bytes = os.path.getsize(filepath)
+    file_bytes = len(data)
     delimeter = "#|#|#|#".encode()
     delimeter = bytearray(delimeter)
     if file_bytes + len(delimeter) > n_bytes:
+        print(file_bytes)
+        print(n_bytes)
         raise ValueError("file size is too large")
     index = 0
-    f = open(filepath, "rb")
-    content = f.read()
+    content = data
     content = bytearray(content)
     content.extend(delimeter)
     binary_content = message_to_binary(content)
@@ -126,6 +130,67 @@ def hide(imagepath, filepath):
             else:
                 image.close()
                 return encoded
+    return encoded
 
 
-print(capacity_of_images(list_images("images")))
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto import Random
+
+
+def create_aes(password, iv):
+    sha = SHA256.new()
+    sha.update(password.encode())
+    key = sha.digest()
+    return AES.new(key, AES.MODE_CFB, iv)
+
+def encrypt(data, password):
+    iv = Random.new().read(AES.block_size)
+    return iv + create_aes(password, iv).encrypt(data)
+
+def decrypt(data, password):
+    iv, cipher = data[:AES.block_size], data[AES.block_size:]
+    return create_aes(password, iv).decrypt(cipher)
+
+def run():
+    imagepaths = list_imagepath("images")
+    images = list_images(imagepaths)
+    f = open("hw", "rb")
+    data = f.read()
+    encrypted = encrypt(data, "helloworld")
+    len_encrypted = len(encrypted)
+    if capacity_of_images(images) < len_encrypted:
+        return
+    index = 0
+    remain = bytearray(encrypted)
+    for image in images:
+        capacity = capacity_of_image(image)
+        size = capacity
+        if len(remain) < capacity:
+            size = len(remain)
+        encoded = hide(image, remain[:size])
+        encoded.save("new/" + image.filename)
+        print(image.filename)
+        remain = remain[size:]
+    f.close()
+    imagepaths = list_imagepath("new/images")
+    images = list_images(imagepaths)
+    f = open("output.png", "wb")
+    result = bytearray()
+    for image in images:
+        result.extend(reveral(image))
+    result = bytes(result)
+    result = decrypt(result, "helloworld")
+    f.write(result)
+
+
+        
+
+
+
+run()
+
+
+
+
+
