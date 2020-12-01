@@ -58,7 +58,6 @@ def split(binary):
 def cut_bytes(data):
     delimeter = "#|#|#|#".encode()
     delimeter = bytearray(delimeter)
-    print(len(delimeter))
     j = 0
     for i in range(len(data)):
         if data[i] == delimeter[j]:
@@ -99,8 +98,6 @@ def hide(image, data):
     delimeter = "#|#|#|#".encode()
     delimeter = bytearray(delimeter)
     if file_bytes + len(delimeter) > n_bytes:
-        print(file_bytes)
-        print(n_bytes)
         raise ValueError("file size is too large")
     index = 0
     content = data
@@ -152,7 +149,40 @@ def decrypt(data, password):
     iv, cipher = data[:AES.block_size], data[AES.block_size:]
     return create_aes(password, iv).decrypt(cipher)
 
-def run():
+def hide_into_album(filepath, password, fr, to):
+    imagepaths = list_imagepath(fr)
+    f = open(filepath, "rb")
+    data = f.read()
+    encrypted = encrypt(data, password)
+    len_encrypted = len(encrypted)
+    if capacity_of_images(images) < len_encrypted:
+        return
+    remain = bytearray(encrypted)
+    for image in images:
+        capacity = capacity_of_image(image)
+        size = capacity
+        if len(remain) < capacity:
+            size = len(remain)
+        encoded = hide(image, remain[:size])
+        encoded.save(to + "/" + image.filename)
+        remain = remain[size:]
+        image.close()
+    f.close()
+
+def reveral_from_album(fr, to, password):
+    imagepaths = list_imagepath(fr)
+    images = list_images(imagepaths)
+    f = open(to, "wb")
+    result = bytearray()
+    for image in images:
+        result.extend(reveral(image))
+        image.close()
+    result = bytes(result)
+    result = decrypt(result, password)
+    f.write(result)
+
+
+def test():
     imagepaths = list_imagepath("images")
     images = list_images(imagepaths)
     f = open("hw", "rb")
@@ -161,7 +191,6 @@ def run():
     len_encrypted = len(encrypted)
     if capacity_of_images(images) < len_encrypted:
         return
-    index = 0
     remain = bytearray(encrypted)
     for image in images:
         capacity = capacity_of_image(image)
@@ -170,7 +199,6 @@ def run():
             size = len(remain)
         encoded = hide(image, remain[:size])
         encoded.save("new/" + image.filename)
-        print(image.filename)
         remain = remain[size:]
     f.close()
     imagepaths = list_imagepath("new/images")
@@ -182,15 +210,3 @@ def run():
     result = bytes(result)
     result = decrypt(result, "helloworld")
     f.write(result)
-
-
-        
-
-
-
-run()
-
-
-
-
-
