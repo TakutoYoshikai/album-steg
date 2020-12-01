@@ -151,11 +151,13 @@ def decrypt(data, password):
 
 def hide_into_album(filepath, password, fr, to):
     imagepaths = list_imagepath(fr)
+    images = list_images(imagepaths)
     f = open(filepath, "rb")
     data = f.read()
     encrypted = encrypt(data, password)
     len_encrypted = len(encrypted)
     if capacity_of_images(images) < len_encrypted:
+        print("size over")
         return
     remain = bytearray(encrypted)
     for image in images:
@@ -169,7 +171,7 @@ def hide_into_album(filepath, password, fr, to):
         image.close()
     f.close()
 
-def reveral_from_album(fr, to, password):
+def reveral_from_album(password, fr, to):
     imagepaths = list_imagepath(fr)
     images = list_images(imagepaths)
     f = open(to, "wb")
@@ -181,32 +183,3 @@ def reveral_from_album(fr, to, password):
     result = decrypt(result, password)
     f.write(result)
 
-
-def test():
-    imagepaths = list_imagepath("images")
-    images = list_images(imagepaths)
-    f = open("hw", "rb")
-    data = f.read()
-    encrypted = encrypt(data, "helloworld")
-    len_encrypted = len(encrypted)
-    if capacity_of_images(images) < len_encrypted:
-        return
-    remain = bytearray(encrypted)
-    for image in images:
-        capacity = capacity_of_image(image)
-        size = capacity
-        if len(remain) < capacity:
-            size = len(remain)
-        encoded = hide(image, remain[:size])
-        encoded.save("new/" + image.filename)
-        remain = remain[size:]
-    f.close()
-    imagepaths = list_imagepath("new/images")
-    images = list_images(imagepaths)
-    f = open("output.png", "wb")
-    result = bytearray()
-    for image in images:
-        result.extend(reveral(image))
-    result = bytes(result)
-    result = decrypt(result, "helloworld")
-    f.write(result)
