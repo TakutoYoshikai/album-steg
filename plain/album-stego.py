@@ -2,6 +2,8 @@ from PIL import Image
 import os
 from functools import reduce
 
+DELIMETER = "#|#|#|#"
+
 def list_imagepath(dr):
     imagenames = list(filter(lambda x: x.endswith(".png"), os.listdir(dr)))
     imagepaths = []
@@ -56,7 +58,7 @@ def split(binary):
     return bytearray(bytes(n_array))
 
 def cut_bytes(data):
-    delimeter = "#|#|#|#".encode()
+    delimeter = DELIMETER.encode()
     delimeter = bytearray(delimeter)
     j = 0
     for i in range(len(data)):
@@ -95,7 +97,7 @@ def hide(image, data):
     width, height = image.size
     n_bytes = width * height * 3 // 8
     file_bytes = len(data)
-    delimeter = "#|#|#|#".encode()
+    delimeter = DELIMETER.encode()
     delimeter = bytearray(delimeter)
     if file_bytes + len(delimeter) > n_bytes:
         raise ValueError("file size is too large")
